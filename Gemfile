@@ -3,4 +3,5 @@ source "https://rubygems.org"
 
 # gem "rails"
 gem 'ruby_brain'
+gem 'rmagick'
 gem 'pry'
