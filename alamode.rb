@@ -2,66 +2,22 @@ require 'ruby_brain'
 require 'rmagick'
 require 'pry'
 
-def main
-  # 学習用のデータセット
-  # 明示的に初期化
-  training_dataset = []
-  training_teacher = []
+PURECURES = %w(cure_whip cure_custard cure_gelat cure_macron cure_chocolat)
+WEIGHT_FILE = 'weights/alamode.yml'
 
-  Dir.glob('./img/*') do |file|
-    puts "Read...#{file}"
-    # Rmagickで画像を読み込み
-    img = Magick::ImageList.new(file)
-    pixels = img.get_pixels(0, 0, img.columns, img.rows)
-    training_dataset << pickup_colors(pixels)
-    training_teacher << [ img.filename.match(/(whip|custard|gelato|macron|chocolat)/)[0] ]
-  end
-
-  training_teacher.map! do |data|
-    case data
-    when ['whip'] then
-      [1, 0, 0, 0, 0]
-    when ['custard'] then
-      [0, 1, 0, 0, 0]
-    when ['gelato'] then
-      [0, 0, 1, 0, 0]
-    when ['macron'] then
-      [1, 0, 0, 1, 0]
-    else [4]
-      [0, 0, 0, 0, 1]
-    end
-  end
-
-  # ネットワーク構成
+def main(file)
+  puts "Reading image '#{file}'"
+  img_colors = pickup_colors(file)
   network = RubyBrain::Network.new([10, 6, 5])
-
-  # 学習率の設定
-  network.learning_rate = 0.6
-
-  # ネットワークの初期化
   network.init_network
-
-  # 学習させる
-  network.learn(
-    training_dataset, # 学習データ
-    training_teacher, # 教師データ
-    max_training_count = 3000, # 最大学習回数
-    tolerance = 0.0003, # RMSエラー?の許容値。エラーの値がこれより小さくなれば学習十分として終了する
-    monitoring_channels=[:best_params_training] # ログ出力設定
-  )
-
-  binding.pry
+  network.load_weights_from_yaml_file(WEIGHT_FILE)
+  purecure = judge(network.get_forward_outputs(img_colors))[0]
+  puts "This image is... #{purecure}"
 end
 
-
-# pixelから画像の特徴色を抜き出して配列にするメソッド
-def kirakira(file)
+def pickup_colors(file)
   img = Magick::ImageList.new(file)
   pixels = img.get_pixels(0, 0, img.columns, img.rows)
-  pickup_colors(pixels)
-end
-
-def pickup_colors(pixels)
   colors = {}
   pixels.each do |pixel|
     colors[pixel.to_color.to_s] ||= 0
@@ -72,6 +28,9 @@ def pickup_colors(pixels)
     color[1..-1].hex
   end
 end
-  
 
-main
+def judge(outputs)
+  PURECURES.zip(outputs).max_by { |output| output.last }
+end
+
+main(ARGV[0])
