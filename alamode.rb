@@ -11,6 +11,8 @@ def main(file)
   network = RubyBrain::Network.new([10, 30, 5])
   network.init_network
   network.load_weights_from_yaml_file(WEIGHT_FILE)
+  puts 'scores:'
+  p network.get_forward_outputs(img_colors)
   purecure = judge(network.get_forward_outputs(img_colors))[0]
   puts "This image is... #{purecure}"
 end
