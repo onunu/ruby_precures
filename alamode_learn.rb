@@ -11,10 +11,15 @@ def main
   Dir.glob('./img/*') do |file|
     puts "Read...#{file}"
     # Rmagickで画像を読み込み
-    img = Magick::ImageList.new(file)
-    pixels = img.get_pixels(0, 0, img.columns, img.rows)
-    training_dataset << pickup_colors(pixels)
-    training_teacher << [ img.filename.match(/(whip|custard|gelato|macron|chocolat)/)[0] ]
+    begin
+      img = Magick::ImageList.new(file)
+      pixels = img.get_pixels(0, 0, img.columns, img.rows)
+      training_dataset << pickup_colors(pixels)
+      training_teacher << [ img.filename.match(/(whip|custard|gelato|macron|chocolat)/)[0] ]
+    rescue
+      puts "#{file} is raise error"
+      next
+    end
   end
 
   training_teacher.map! do |data|
@@ -33,7 +38,7 @@ def main
   end
 
   # ネットワーク構成
-  network = RubyBrain::Network.new([10, 6, 5])
+  network = RubyBrain::Network.new([10, 30, 5])
 
   # 学習率の設定
   network.learning_rate = 0.6
@@ -45,7 +50,7 @@ def main
   network.learn(
     training_dataset, # 学習データ
     training_teacher, # 教師データ
-    max_training_count = 3000, # 最大学習回数
+    max_training_count = 6000, # 最大学習回数
     tolerance = 0.0003, # RMSエラー?の許容値。エラーの値がこれより小さくなれば学習十分として終了する
     monitoring_channels=[:best_params_training] # ログ出力設定
   )

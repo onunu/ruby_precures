@@ -8,7 +8,7 @@ WEIGHT_FILE = 'weights/alamode.yml'
 def main(file)
   puts "Reading image '#{file}'"
   img_colors = pickup_colors(file)
-  network = RubyBrain::Network.new([10, 6, 5])
+  network = RubyBrain::Network.new([10, 30, 5])
   network.init_network
   network.load_weights_from_yaml_file(WEIGHT_FILE)
   purecure = judge(network.get_forward_outputs(img_colors))[0]
